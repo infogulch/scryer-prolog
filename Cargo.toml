@@ -66,6 +66,10 @@ bytes = "1"
 dashu = { git = "https://github.com/coasys/dashu.git"  }
 rand = "0.8.5"
 
+[target.'cfg(any(target_arch = "armv7", target_arch = "wasm32"))'.dependencies.openssl-sys]
+version = "0.10"
+features = ["vendored"]
+
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libffi = { git = "https://github.com/coasys/libffi-rs.git", branch = "windows-space", optional = true }
 hostname = { version = "0.3.1", optional = true }
@@ -86,6 +90,7 @@ ring-wasi = { version = "0.16.25" }
 
 [target.'cfg(not(target_os = "wasi"))'.dependencies]
 ring = { version = "0.16.13" }
+
 
 [dev-dependencies]
 assert_cmd = "1.0.3"
