@@ -67,7 +67,7 @@ dashu = { git = "https://github.com/coasys/dashu.git"  }
 rand = "0.8.5"
 
 [target.'cfg(any(target_arch = "armv7", target_arch = "wasm32"))'.dependencies.openssl-sys]
-version = "0.10"
+version = "0.9"
 features = ["vendored"]
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
