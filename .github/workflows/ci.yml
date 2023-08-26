@@ -21,6 +21,8 @@ jobs:
           - { os: ubuntu-20.04,   rust-version: stable,  shell: bash, extra: true }
           - { os: ubuntu-20.04,   rust-version: 1.65,    shell: bash }
           - { os: ubuntu-20.04,   rust-version: beta,    shell: bash }
+          - { os: ubuntu-20.04,   rust-version: beta,    shell: bash, targets: "armv7-unknown-linux-gnueabihf" }
+          - { os: ubuntu-20.04,   rust-version: beta,    shell: bash, targets: "wasm32-unknown-unknown" }
           - { os: ubuntu-20.04,   rust-version: nightly, shell: bash }
     defaults:
       run:
@@ -32,6 +34,7 @@ jobs:
         id: toolchain
         with:
           toolchain: ${{ matrix.rust-version }}
+          targets: ${{ matrix.targets }}
           components: clippy, rustfmt
       - uses: msys2/setup-msys2@v2
         if: contains(matrix.os,'windows')
