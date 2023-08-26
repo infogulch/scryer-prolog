@@ -21,8 +21,8 @@ jobs:
           - { os: ubuntu-20.04,   rust-version: stable,  shell: bash, extra: true }
           - { os: ubuntu-20.04,   rust-version: 1.65,    shell: bash }
           - { os: ubuntu-20.04,   rust-version: beta,    shell: bash }
-          - { os: ubuntu-20.04,   rust-version: beta,    shell: bash, targets: "armv7-unknown-linux-gnueabihf" }
-          - { os: ubuntu-20.04,   rust-version: beta,    shell: bash, targets: "wasm32-unknown-unknown" }
+          - { os: ubuntu-20.04,   rust-version: beta,    shell: bash, target: "armv7-unknown-linux-gnueabihf" }
+          - { os: ubuntu-20.04,   rust-version: beta,    shell: bash, target: "wasm32-unknown-unknown" }
           - { os: ubuntu-20.04,   rust-version: nightly, shell: bash }
     defaults:
       run:
@@ -34,7 +34,7 @@ jobs:
         id: toolchain
         with:
           toolchain: ${{ matrix.rust-version }}
-          targets: ${{ matrix.targets }}
+          targets: ${{ matrix.target }}
           components: clippy, rustfmt
       - uses: msys2/setup-msys2@v2
         if: contains(matrix.os,'windows')
@@ -52,13 +52,19 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ matrix.os }}_rustc-${{ steps.toolchain.outputs.cachekey }}_cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Set target expression env var
+        run: |
+          # Built param string for target; which is empty if no target and prepends '--target ' if not empty
+          # Uses should not be quoted
+          TARGET="${{ matrix.target }}"
+          echo "TARGET_EXPR=${TARGET:+--target $TARGET}" >> $GITHUB_ENV
 
       # Build and test.
       - name: Build library
-        run: cargo rustc --verbose --lib -- -D warnings
+        run: cargo rustc $TARGET_EXPR --verbose --lib -- -D warnings
       - name: Test
         if: "!matrix.extra"
-        run: cargo test --all --verbose
+        run: cargo test $TARGET_EXPR --all --verbose
 
       # Extra steps only run once to avoid duplication, when matrix.extra is true
       - name: Test and report
