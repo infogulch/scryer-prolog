@@ -16,55 +16,35 @@ jobs:
     strategy:
       matrix:
         include:
-          - { os: windows-latest, rust-version: stable,  shell: 'msys2 {0}' }
-          - { os: macos-11,       rust-version: stable,  shell: bash }
-          - { os: ubuntu-20.04,   rust-version: stable,  shell: bash, extra: true }
-          - { os: ubuntu-20.04,   rust-version: 1.65,    shell: bash }
-          - { os: ubuntu-20.04,   rust-version: beta,    shell: bash }
-          - { os: ubuntu-20.04,   rust-version: beta,    shell: bash, target: "armv7-unknown-linux-gnueabihf" }
-          - { os: ubuntu-20.04,   rust-version: beta,    shell: bash, target: "wasm32-unknown-unknown" }
-          - { os: ubuntu-20.04,   rust-version: nightly, shell: bash }
+          - { os: windows-latest, toolchain: stable,  target: 'x86_64-pc-windows-msvc' }
+          - { os: macos-11,       toolchain: stable,  target: 'x86_64-apple-darwin' }
+          - { os: ubuntu-20.04,   toolchain: stable,  target: 'x86_64-unknown-linux-gnu', extra: true }
+          - { os: ubuntu-20.04,   toolchain: 1.65,    target: 'x86_64-unknown-linux-gnu' }
+          - { os: ubuntu-20.04,   toolchain: beta,    target: 'x86_64-unknown-linux-gnu' }
+          - { os: ubuntu-20.04,   toolchain: nightly, target: 'x86_64-unknown-linux-gnu' }
+          - { os: ubuntu-20.04,   toolchain: beta,    target: "armv7-unknown-linux-gnueabihf" }
+          - { os: ubuntu-20.04,   toolchain: beta,    target: "wasm32-unknown-unknown" }
     defaults:
       run:
         shell: ${{ matrix.shell }}
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@master
-        if: "!contains(matrix.os,'windows')"
-        id: toolchain
-        with:
-          toolchain: ${{ matrix.rust-version }}
-          targets: ${{ matrix.target }}
-          components: clippy, rustfmt
-      - uses: msys2/setup-msys2@v2
-        if: contains(matrix.os,'windows')
-        with:
-          update: true
-          install: >-
-            base-devel
-            mingw-w64-x86_64-rust
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ matrix.os }}_rustc-${{ steps.toolchain.outputs.cachekey }}_cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Set target expression env var
-        run: |
-          # Built param string for target; which is empty if no target and prepends '--target ' if not empty
-          # Uses should not be quoted
-          TARGET="${{ matrix.target }}"
-          echo "TARGET_EXPR=${TARGET:+--target $TARGET}" >> $GITHUB_ENV
-
-      # Build and test.
-      - name: Build library
-        run: cargo rustc $TARGET_EXPR --verbose --lib -- -D warnings
-      - name: Test
-        if: "!matrix.extra"
-        run: cargo test $TARGET_EXPR --all --verbose
+      #- uses: Swatinem/rust-cache@v2
+      #  with: 
+      #    save-if: ${{ github.ref == 'refs/heads/master' }}
+      - uses: houseabsolute/actions-rust-cross@v0
+        with: 
+          command: build
+          args: "--verbose"
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+      - if: matrix.extra
+        uses: houseabsolute/actions-rust-cross@v0
+        with: 
+          command: test
+          args: "--verbose"
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
 
       # Extra steps only run once to avoid duplication, when matrix.extra is true
       - name: Test and report
@@ -96,13 +76,14 @@ jobs:
       # On stable rust builds, build a binary and publish as a github actions
       # artifact. These binaries could be useful for testing the pipeline but
       # are only retained by github for 90 days.
-      - name: Build release binary
-        if: contains(matrix.rust-version,'stable')
-        run: |
-          cargo rustc --verbose --bin scryer-prolog --release -- -D warnings
-          echo "$PWD/target/release" >> $GITHUB_PATH
+      - uses: houseabsolute/actions-rust-cross@v0
+        with: 
+          command: build
+          args: "--verbose --release --bin scryer-prolog"
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
       - name: Publish release binary artifact
-        if: contains(matrix.rust-version,'stable')
+        if: contains(matrix.toolchain,'stable')
         uses: actions/upload-artifact@v3
         with:
           path: target/release/scryer-prolog*
