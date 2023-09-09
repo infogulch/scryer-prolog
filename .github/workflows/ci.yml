@@ -175,6 +175,7 @@ jobs:
           zip scryer-prolog_macos-11.zip ./scryer-prolog_macos-11_x86_64-apple-darwin/scryer-prolog
           zip scryer-prolog_ubuntu-20.04.zip ./scryer-prolog_ubuntu-20.04_x86_64-unknown-linux-gnu/scryer-prolog
           zip scryer-prolog_windows-latest.zip ./scryer-prolog_windows-latest_x86_64-pc-windows-gnu/scryer-prolog.exe
+          zip scryer-prolog_unknown-wasm32.zip "./scryer-prolog_unknown_wasm32/*"
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -182,3 +183,4 @@ jobs:
             scryer-prolog_macos-11.zip
             scryer-prolog_ubuntu-20.04.zip
             scryer-prolog_windows-latest.zip
+            scryer-prolog_unknown-wasm32.zip
