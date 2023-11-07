@@ -138,6 +138,8 @@ jobs:
           cache-context: report
       - run: |
           cargo install cargo2junit
+          cargo install iai-callgrind-runner --version `cargo metadata --format-version 1 | jq -r '.resolve.nodes[].id|split(" ")|select(.[0]=="iai-callgrind")|.[1]'`
+          sudo apt install valgrind -y
 
       - name: Test and report
         run: |
@@ -154,6 +156,8 @@ jobs:
           files: cargo_test_results.xml
           fail_on: nothing
           comment_mode: off
+
+      - run: cargo bench --bench run_ci
 
   # Publish binaries when building for a tag
   release:
